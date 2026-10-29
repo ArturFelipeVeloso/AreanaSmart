@@ -39,7 +39,7 @@
     $('playersTable').innerHTML = '';
     $('nextBattle').innerHTML = '';
     $('champion').innerHTML = '';
-    $('viewport').innerHTML = `<div class="empty-state"><div><div class="big">Bem-vindo à Arena</div>Entre no painel <a href="admin.html">Admin</a> para criar a primeira competição.</div></div>`;
+    $('viewport').innerHTML = `<div class="empty-state"><div><div class="big">Bem-vindo à Arena</div>A competição aparecerá aqui em breve.</div></div>`;
   }
 
   function render(data) {
