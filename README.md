@@ -93,5 +93,5 @@ supabase/schema.sql   Tabelas + regras de segurança
 ```
 
 ## Segurança (importante)
-- **Modo local:** a senha fica em `js/config.js` como hash PBKDF2 (210 mil iterações), nunca em texto. Use uma senha forte, porque o repositório é público. Ela e protege o painel contra cliques acidentais do público, mas quem tiver acesso ao mesmo computador e souber usar as ferramentas do navegador consegue mexer nos dados. Para um evento com o notebook sob seu controle, é suficiente.
+- **Modo local:** a senha fica em `js/config.js` como hash PBKDF2 (210 mil iterações), nunca em texto. Use uma senha forte, porque o repositório é público. Ela protege o painel contra cliques acidentais do público, mas quem tiver acesso ao mesmo computador e souber usar as ferramentas do navegador consegue mexer nos dados. Para um evento com o notebook sob seu controle, é suficiente.
 - **Modo Supabase:** autenticação e permissões são verificadas pelo servidor do banco, ou seja, segurança de verdade.
