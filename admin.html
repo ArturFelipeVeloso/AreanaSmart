@@ -1,0 +1,173 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Arena · Admin</title>
+  <meta name="robots" content="noindex">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap">
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+  <script src="js/config.js"></script>
+  <script>if (ARENA_CONFIG.supabaseUrl) document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');</script>
+</head>
+<body>
+  <!-- LOGIN -->
+  <div class="login-wrap" id="loginView" hidden>
+    <div class="login card">
+      <div class="brand-logo" data-logo></div>
+      <h1 id="loginTitle">Acesso admin</h1>
+      <p id="loginHint">Entre para gerenciar competições, times e resultados.</p>
+      <form id="loginForm" autocomplete="on">
+        <div class="field"><label for="lUser" id="lUserLbl">Usuário</label><input class="input" id="lUser" autocomplete="username" required></div>
+        <div class="field"><label for="lPass">Senha</label><input class="input" id="lPass" type="password" autocomplete="current-password" required></div>
+        <div class="field" id="lPass2Wrap" hidden><label for="lPass2">Confirme a senha</label><input class="input" id="lPass2" type="password" autocomplete="new-password"></div>
+        <button class="btn primary big" id="loginBtn">Entrar</button>
+        <a href="index.html" style="text-align:center;font-size:.9rem">← Voltar ao telão</a>
+      </form>
+    </div>
+  </div>
+
+  <!-- APP -->
+  <div class="admin" id="appView" hidden>
+    <header class="admin-top">
+      <div class="brand"><div class="brand-logo" data-logo></div><h1>Arena · Admin</h1></div>
+      <span class="badge" id="modeBadge"></span>
+      <div class="spacer"></div>
+      <select class="input" id="compSelect" style="width:auto;min-width:220px" aria-label="Competição"></select>
+      <button class="btn" id="newCompBtn">+ Nova competição</button>
+      <a class="btn primary" id="openScreen" target="_blank">📺 Abrir telão</a>
+      <button class="btn ghost" id="logoutBtn">Sair</button>
+    </header>
+
+    <!-- Sem competição -->
+    <div class="card section" id="firstComp" hidden>
+      <h2>Cadastre sua competição</h2>
+      <p class="hint">Cada competição tem seus próprios times, competidores, chaveamento e rankings. Você pode criar quantas quiser.</p>
+      <form class="form-grid" id="firstCompForm">
+        <div class="field" style="grid-column:1/-1"><label>Nome da competição</label><input class="input" name="name" placeholder="Ex.: Copa Fábrica de Gênios 2026" required></div>
+        <button class="btn primary big">Criar competição</button>
+      </form>
+    </div>
+
+    <div id="compArea" hidden>
+      <nav class="tabs" id="tabs">
+        <button class="tab active" data-tab="comp">⚙️ Competição</button>
+        <button class="tab" data-tab="teams">🛡️ Times <span class="count" id="cTeams">0</span></button>
+        <button class="tab" data-tab="players">👤 Competidores <span class="count" id="cPlayers">0</span></button>
+        <button class="tab" data-tab="bracket">🏆 Chaveamento e resultados</button>
+        <button class="tab" data-tab="account">🔐 Conta e backup</button>
+      </nav>
+
+      <!-- COMPETIÇÃO -->
+      <section class="pane active" data-pane="comp">
+        <div class="card section">
+          <h2>Dados da competição</h2>
+          <p class="hint">As batalhas são individuais, mas os pontos vão para o time do competidor. O time em 1º no ranking é o campeão.</p>
+          <form id="compForm" class="form-grid">
+            <div class="field" style="grid-column:1/-1"><label>Nome</label><input class="input" name="name" required></div>
+            <div class="field" style="grid-column:1/-1"><label>Descrição / data / local (opcional)</label><input class="input" name="description" placeholder="Ex.: 29/10 · Auditório principal"></div>
+            <div class="field"><label>Pontos por vitória</label><input class="input" type="number" min="0" name="points_win"></div>
+            <div class="field"><label>Bônus 1º lugar</label><input class="input" type="number" min="0" name="bonus_first"></div>
+            <div class="field"><label>Bônus 2º lugar</label><input class="input" type="number" min="0" name="bonus_second"></div>
+            <div class="field"><label>Bônus 3º lugar</label><input class="input" type="number" min="0" name="bonus_third"></div>
+            <label class="check" style="grid-column:1/-1"><input type="checkbox" name="avoid_same_team"> No sorteio, evitar que competidores do mesmo time se enfrentem na 1ª fase (quando possível)</label>
+            <div class="actions" style="grid-column:1/-1;margin:0">
+              <button class="btn primary">Salvar</button>
+              <div class="spacer" style="flex:1"></div>
+              <button type="button" class="btn danger" id="delCompBtn">Excluir competição</button>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <!-- TIMES -->
+      <section class="pane" data-pane="teams">
+        <div class="two">
+          <div class="card section">
+            <h2 id="teamFormTitle">Novo time</h2>
+            <p class="hint">Nome e cor do time (a cor aparece no telão).</p>
+            <form id="teamForm" class="list">
+              <input type="hidden" name="id">
+              <div class="field"><label>Nome do time</label><input class="input" name="name" required placeholder="Ex.: Os Algoritmos"></div>
+              <div class="field"><label>Cor</label><input class="input" type="color" name="color" value="#7c5cff"><div class="swatches" id="swatches"></div></div>
+              <div class="actions" style="margin:0"><button class="btn primary">Salvar time</button><button type="button" class="btn ghost" id="teamCancel" hidden>Cancelar edição</button></div>
+            </form>
+          </div>
+          <div class="card section">
+            <h2>Times cadastrados</h2>
+            <p class="hint">Excluir um time também remove seus competidores.</p>
+            <div class="list" id="teamListAdmin"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- COMPETIDORES -->
+      <section class="pane" data-pane="players">
+        <div class="two">
+          <div class="card section">
+            <h2>Adicionar competidores</h2>
+            <p class="hint">Cada competidor pertence a um único time. Um time pode ter vários competidores.</p>
+            <form id="playerForm" class="list">
+              <div class="field"><label>Time</label><select class="input" name="team_id" id="playerTeam" required></select></div>
+              <div class="field"><label>Nome (ou vários, um por linha)</label><textarea class="input" name="names" placeholder="Ana&#10;Bruno&#10;Carla" required></textarea></div>
+              <button class="btn primary">Adicionar ao time</button>
+            </form>
+          </div>
+          <div class="card section">
+            <h2>Competidores por time</h2>
+            <p class="hint">Use o seletor no nome para trocar de time.</p>
+            <div id="playerGroups"></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- CHAVEAMENTO -->
+      <section class="pane" data-pane="bracket">
+        <div class="card section">
+          <h2>Tabela e árvore mata-mata</h2>
+          <p class="hint">Gere os confrontos por sorteio e sorteie novamente quantas vezes quiser. Depois, clique no nome do vencedor de cada batalha para avançá-lo (clique de novo para desfazer).</p>
+          <div class="stats" id="bracketStats"></div>
+          <div id="bracketWarn"></div>
+          <div class="actions">
+            <button class="btn primary big" id="genBtn">🎲 Gerar tabela e árvore</button>
+            <button class="btn" id="clearResBtn">Limpar resultados</button>
+            <button class="btn danger" id="delBracketBtn">Apagar chaveamento</button>
+          </div>
+          <div class="admin-bracket" id="adminBracket"></div>
+        </div>
+      </section>
+
+      <!-- CONTA -->
+      <section class="pane" data-pane="account">
+        <div class="two">
+          <div class="card section">
+            <h2>Trocar senha</h2>
+            <p class="hint" id="pwHint">Senha do acesso admin.</p>
+            <form id="pwForm" class="list">
+              <div class="field" id="oldPwWrap"><label>Senha atual</label><input class="input" type="password" name="old" autocomplete="current-password"></div>
+              <div class="field"><label>Nova senha</label><input class="input" type="password" name="new" autocomplete="new-password" required></div>
+              <button class="btn primary">Alterar senha</button>
+            </form>
+          </div>
+          <div class="card section">
+            <h2>Backup dos dados</h2>
+            <p class="hint">Exporte tudo (todas as competições) em um arquivo JSON. No modo local, você pode restaurar a partir desse arquivo.</p>
+            <div class="actions">
+              <button class="btn" id="exportBtn">⬇️ Exportar backup</button>
+              <label class="btn" id="importLbl">⬆️ Importar backup<input type="file" id="importFile" accept="application/json" hidden></label>
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+
+  <script src="js/engine.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/bracket-view.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
