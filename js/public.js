@@ -151,6 +151,7 @@
   }
   $('fsBtn').addEventListener('click', toggleFs);
   document.addEventListener('keydown', (e) => { if ((e.key === 'f' || e.key === 'F') && !e.target.closest('input,select,textarea')) toggleFs(); });
+  document.addEventListener('keydown', (e) => { if ((e.key === 't' || e.key === 'T') && !e.target.closest('input,select,textarea')) window.toggleTheme(); });
   document.addEventListener('fullscreenchange', () => { document.body.classList.toggle('fs', !!document.fullscreenElement); setTimeout(fit, 120); });
 
   $('compSelect').addEventListener('change', (e) => {

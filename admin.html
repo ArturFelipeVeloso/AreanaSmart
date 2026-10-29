@@ -9,13 +9,15 @@
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700;800&family=Inter:wght@400;500;600;700;800&display=swap">
   <link rel="stylesheet" href="css/style.css">
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%8F%86%3C/text%3E%3C/svg%3E">
+  <script src="js/theme.js"></script>
   <script src="js/config.js"></script>
   <script>if (ARENA_CONFIG.supabaseUrl) document.write('<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"><\/script>');</script>
 </head>
 <body>
   <!-- LOGIN -->
   <div class="login-wrap" id="loginView" hidden>
-    <div class="login card">
+    <div class="login card" style="position:relative">
+      <button class="btn theme-btn" data-theme-toggle type="button" style="position:absolute;top:16px;right:16px">☀️</button>
       <div class="brand-logo" data-logo></div>
       <h1 id="loginTitle">Acesso admin</h1>
       <p id="loginHint">Entre para gerenciar competições, times e resultados.</p>
@@ -37,6 +39,7 @@
       <select class="input" id="compSelect" style="width:auto;min-width:220px" aria-label="Competição"></select>
       <button class="btn" id="newCompBtn">+ Nova competição</button>
       <a class="btn primary" id="openScreen" target="_blank">📺 Abrir telão</a>
+      <button class="btn theme-btn" data-theme-toggle type="button">☀️</button>
       <button class="btn ghost" id="logoutBtn">Sair</button>
     </header>
 
