@@ -34,7 +34,8 @@ Feito em HTML + CSS + JavaScript puro: não precisa de build, roda direto no **G
 
 ### Modo 1 — Local (padrão, zero configuração)
 Os dados ficam no **navegador** (localStorage).
-- No primeiro acesso ao `admin.html` você cria o usuário e a senha do admin.
+- O login do admin é **fixo** em `js/config.js` (`adminUser` + `adminPassHash`). Não existe cadastro pelo site: ninguém consegue criar outro acesso.
+- Para trocar a senha: *Admin → Conta e backup → Gerar nova senha*, copie a linha gerada e substitua `adminPassHash` em `js/config.js`.
 - Abra o **admin e o telão no mesmo computador e navegador** (ex.: o notebook ligado ao projetor/TV: telão numa janela em tela cheia, admin em outra). O telão atualiza na hora.
 - Faça **backup** em *Conta e backup → Exportar*.
 
@@ -92,5 +93,5 @@ supabase/schema.sql   Tabelas + regras de segurança
 ```
 
 ## Segurança (importante)
-- **Modo local:** a senha fica guardada como hash no navegador e protege o painel contra cliques acidentais do público, mas quem tiver acesso ao mesmo computador e souber usar as ferramentas do navegador consegue mexer nos dados. Para um evento com o notebook sob seu controle, é suficiente.
+- **Modo local:** a senha fica em `js/config.js` como hash PBKDF2 (210 mil iterações), nunca em texto. Use uma senha forte, porque o repositório é público. Ela e protege o painel contra cliques acidentais do público, mas quem tiver acesso ao mesmo computador e souber usar as ferramentas do navegador consegue mexer nos dados. Para um evento com o notebook sob seu controle, é suficiente.
 - **Modo Supabase:** autenticação e permissões são verificadas pelo servidor do banco, ou seja, segurança de verdade.

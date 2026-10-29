@@ -19,23 +19,12 @@
   /* ================= LOGIN ================= */
   async function initAuth() {
     if (await Store.isLoggedIn()) return showApp();
-    const setup = await Store.needsSetup();
     $('loginView').hidden = false;
     $('appView').hidden = true;
     if (!isLocal) { $('lUserLbl').textContent = 'E-mail'; $('lUser').type = 'email'; }
-    if (setup) {
-      $('loginTitle').textContent = 'Criar acesso admin';
-      $('loginHint').textContent = 'Primeiro acesso neste navegador: defina o usuário e a senha do administrador.';
-      $('lPass2Wrap').hidden = false;
-      $('loginBtn').textContent = 'Criar acesso';
-    }
     $('loginForm').onsubmit = async (e) => {
       e.preventDefault();
-      const u = $('lUser').value, p = $('lPass').value;
-      if (setup) {
-        if (p !== $('lPass2').value) return UI.toast('As senhas não conferem.', 'err');
-        if (await run(() => Store.setup(u, p).then(() => true))) showApp();
-      } else if (await run(() => Store.login(u, p).then(() => true))) showApp();
+      if (await run(() => Store.login($('lUser').value, $('lPass').value).then(() => true))) showApp();
     };
     $('lUser').focus();
   }
@@ -48,7 +37,7 @@
     $('appView').hidden = false;
     $('modeBadge').textContent = isLocal ? 'MODO LOCAL · dados neste navegador' : 'ONLINE · Supabase';
     $('modeBadge').className = 'badge' + (isLocal ? '' : ' on');
-    if (!isLocal) { $('oldPwWrap').hidden = true; $('importLbl').hidden = true; }
+    if (!isLocal) { $('oldPwWrap').hidden = true; $('importLbl').hidden = true; $('pwHint').textContent = 'Nova senha do seu usuário no Supabase.'; }
     buildSwatches();
     await reload();
   }
@@ -298,7 +287,19 @@
   $('pwForm').onsubmit = async (e) => {
     e.preventDefault();
     const f = e.target;
-    if (await run(() => Store.changePassword(f.old.value, f.new.value).then(() => true), 'Senha alterada!')) f.reset();
+    const r = await run(() => Store.changePassword(f.old.value, f.new.value).then((x) => x || true));
+    if (!r) return;
+    f.reset();
+    if (r.configLine) {
+      $('pwOut').hidden = false;
+      $('pwLine').value = r.configLine;
+      $('pwLine').select();
+      UI.toast('Hash gerado. Agora substitua a linha no js/config.js.', 'ok');
+    } else UI.toast('Senha alterada!', 'ok');
+  };
+  $('pwCopy').onclick = async () => {
+    try { await navigator.clipboard.writeText($('pwLine').value); UI.toast('Copiado!', 'ok'); }
+    catch (e) { $('pwLine').select(); }
   };
   $('exportBtn').onclick = async () => {
     const all = await run(() => Store.exportAll());

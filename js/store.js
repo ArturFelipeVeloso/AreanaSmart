@@ -6,19 +6,29 @@
 (function () {
   const CFG = window.ARENA_CONFIG || {};
   const DB_KEY = 'arena_db_v1';
-  const AUTH_KEY = 'arena_admin_v1';
   const SESSION_KEY = 'arena_session_v1';
 
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now().toString(36) + Math.random().toString(36).slice(2));
   const now = () => new Date().toISOString();
   const norm = (s) => String(s || '').trim().toLocaleLowerCase('pt-BR');
 
-  async function sha256(text) {
-    if (crypto.subtle) {
-      const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
-      return [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
-    }
-    let h = 0; for (const ch of text) h = (h * 31 + ch.charCodeAt(0)) | 0; return 'x' + h;
+
+
+  const PBKDF2_ITER = 210000;
+  const hex = (buf) => [...new Uint8Array(buf)].map((b) => b.toString(16).padStart(2, '0')).join('');
+  async function pbkdf2(pass, saltHex, iter) {
+    const key = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveBits']);
+    const salt = new Uint8Array(saltHex.match(/../g).map((h) => parseInt(h, 16)));
+    return hex(await crypto.subtle.deriveBits({ name: 'PBKDF2', hash: 'SHA-256', salt, iterations: iter }, key, 256));
+  }
+  async function hashPass(pass) {
+    const salt = hex(crypto.getRandomValues(new Uint8Array(16)));
+    return `pbkdf2$${PBKDF2_ITER}$${salt}$${await pbkdf2(pass, salt, PBKDF2_ITER)}`;
+  }
+  async function verifyPass(pass, stored) {
+    const [alg, iter, salt, hash] = String(stored).split('$');
+    if (alg !== 'pbkdf2' || !hash) return false;
+    return (await pbkdf2(String(pass || ''), salt, Number(iter))) === hash;
   }
 
   const COMP_DEFAULTS = { description: '', points_win: 3, bonus_first: 10, bonus_second: 6, bonus_third: 4, avoid_same_team: true };
@@ -114,27 +124,23 @@
       this._write({ competitions: data.competitions, teams: data.teams || [], competitors: data.competitors || [], brackets: data.brackets || {} });
     },
 
-    /* autenticação local: usuário + senha (hash SHA-256 com sal) guardados no navegador */
-    async needsSetup() { return !localStorage.getItem(AUTH_KEY); },
-    async setup(user, pass) {
-      if (!user || !pass || pass.length < 4) throw new Error('Informe usuário e uma senha com pelo menos 4 caracteres.');
-      const salt = uid();
-      localStorage.setItem(AUTH_KEY, JSON.stringify({ user: norm(user), salt, hash: await sha256(salt + pass) }));
-      sessionStorage.setItem(SESSION_KEY, '1');
-    },
+    /* autenticação local: usuário e hash da senha (PBKDF2) fixos em js/config.js.
+       Ninguém consegue criar outro acesso pelo site. */
+    async needsSetup() { return false; },
+    async setup() { throw new Error('Cadastro de admin desativado.'); },
     async login(user, pass) {
-      const a = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null');
-      if (!a || a.user !== norm(user) || a.hash !== (await sha256(a.salt + pass))) throw new Error('Usuário ou senha incorretos.');
+      const cfgHash = String(CFG.adminPassHash || '');
+      if (!CFG.adminUser || !cfgHash) throw new Error('Admin não configurado em js/config.js.');
+      if (norm(user) !== norm(CFG.adminUser) || !(await verifyPass(pass, cfgHash))) throw new Error('Usuário ou senha incorretos.');
       sessionStorage.setItem(SESSION_KEY, '1');
     },
     async isLoggedIn() { return sessionStorage.getItem(SESSION_KEY) === '1'; },
     async logout() { sessionStorage.removeItem(SESSION_KEY); },
+    /* Gera o hash de uma nova senha para colar em js/config.js */
     async changePassword(oldPass, newPass) {
-      const a = JSON.parse(localStorage.getItem(AUTH_KEY) || 'null');
-      if (!a || a.hash !== (await sha256(a.salt + oldPass))) throw new Error('Senha atual incorreta.');
-      if (!newPass || newPass.length < 4) throw new Error('A nova senha precisa ter pelo menos 4 caracteres.');
-      const salt = uid();
-      localStorage.setItem(AUTH_KEY, JSON.stringify({ user: a.user, salt, hash: await sha256(salt + newPass) }));
+      if (!(await verifyPass(oldPass, String(CFG.adminPassHash || '')))) throw new Error('Senha atual incorreta.');
+      if (!newPass || newPass.length < 8) throw new Error('A nova senha precisa ter pelo menos 8 caracteres.');
+      return { configLine: `adminPassHash: '${await hashPass(newPass)}',` };
     },
 
     onChange(cb) {

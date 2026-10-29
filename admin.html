@@ -22,7 +22,6 @@
       <form id="loginForm" autocomplete="on">
         <div class="field"><label for="lUser" id="lUserLbl">Usuário</label><input class="input" id="lUser" autocomplete="username" required></div>
         <div class="field"><label for="lPass">Senha</label><input class="input" id="lPass" type="password" autocomplete="current-password" required></div>
-        <div class="field" id="lPass2Wrap" hidden><label for="lPass2">Confirme a senha</label><input class="input" id="lPass2" type="password" autocomplete="new-password"></div>
         <button class="btn primary big" id="loginBtn">Entrar</button>
         <a href="index.html" style="text-align:center;font-size:.9rem">← Voltar ao telão</a>
       </form>
@@ -144,12 +143,16 @@
         <div class="two">
           <div class="card section">
             <h2>Trocar senha</h2>
-            <p class="hint" id="pwHint">Senha do acesso admin.</p>
+            <p class="hint" id="pwHint">No modo local, o usuário e a senha ficam fixos no arquivo <code>js/config.js</code> (ninguém cria acesso pelo site). Para trocar: informe a senha atual e a nova, copie a linha gerada e substitua a linha <code>adminPassHash</code> no <code>js/config.js</code> do repositório.</p>
             <form id="pwForm" class="list">
               <div class="field" id="oldPwWrap"><label>Senha atual</label><input class="input" type="password" name="old" autocomplete="current-password"></div>
               <div class="field"><label>Nova senha</label><input class="input" type="password" name="new" autocomplete="new-password" required></div>
-              <button class="btn primary">Alterar senha</button>
+              <button class="btn primary">Gerar nova senha</button>
             </form>
+            <div class="list" id="pwOut" hidden style="margin-top:14px">
+              <div class="field"><label>Linha para colar em js/config.js</label><textarea class="input" id="pwLine" readonly style="min-height:80px;font-family:monospace;font-size:.8rem"></textarea></div>
+              <button type="button" class="btn" id="pwCopy">📋 Copiar</button>
+            </div>
           </div>
           <div class="card section">
             <h2>Backup dos dados</h2>
