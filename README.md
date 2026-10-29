@@ -34,8 +34,9 @@ Feito em HTML + CSS + JavaScript puro: não precisa de build, roda direto no **G
 
 ### Modo 1 — Local (padrão, zero configuração)
 Os dados ficam no **navegador** (localStorage).
-- O login do admin é **fixo** em `js/config.js` (`adminUser` + `adminPassHash`). Não existe cadastro pelo site: ninguém consegue criar outro acesso.
-- Para trocar a senha: *Admin → Conta e backup → Gerar nova senha*, copie a linha gerada e substitua `adminPassHash` em `js/config.js`.
+- **Criar acesso de admin:** na tela de login do admin, clique em *Criar acesso de admin*, escolha usuário e senha (com confirmação) e informe a **senha master**.
+- A senha master fica em `js/config.js` apenas como hash PBKDF2 (`masterPassHash`). Para trocá-la, gere um novo hash e substitua essa linha.
+- As contas criadas ficam salvas neste navegador (com a senha em hash). Troque a sua senha em *Conta e backup*.
 - Abra o **admin e o telão no mesmo computador e navegador** (ex.: o notebook ligado ao projetor/TV: telão numa janela em tela cheia, admin em outra). O telão atualiza na hora.
 - Faça **backup** em *Conta e backup → Exportar*.
 

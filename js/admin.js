@@ -22,9 +22,29 @@
     $('loginView').hidden = false;
     $('appView').hidden = true;
     if (!isLocal) { $('lUserLbl').textContent = 'E-mail'; $('lUser').type = 'email'; }
+    let creating = false;
+    const setMode = (c) => {
+      creating = c;
+      $('loginTitle').textContent = c ? 'Criar acesso admin' : 'Acesso admin';
+      $('loginHint').textContent = c ? 'Escolha seu usuário e senha. Para confirmar, informe a senha master.' : 'Entre para gerenciar competições, times e resultados.';
+      $('lPass2Wrap').hidden = !c; $('lMasterWrap').hidden = !c;
+      $('lPass2').required = c; $('lMaster').required = c;
+      $('lPass').autocomplete = c ? 'new-password' : 'current-password';
+      $('loginBtn').textContent = c ? 'Criar acesso' : 'Entrar';
+      $('modeBtn').textContent = c ? 'Já tenho acesso · Entrar' : 'Criar acesso de admin';
+      $('lUser').focus();
+    };
+    if (isLocal && Store.canCreateAccount && Store.canCreateAccount()) {
+      $('modeBtn').hidden = false;
+      $('modeBtn').onclick = () => setMode(!creating);
+    }
     $('loginForm').onsubmit = async (e) => {
       e.preventDefault();
-      if (await run(() => Store.login($('lUser').value, $('lPass').value).then(() => true))) showApp();
+      const u = $('lUser').value, p = $('lPass').value;
+      if (creating) {
+        if (p !== $('lPass2').value) return UI.toast('As senhas não conferem.', 'err');
+        if (await run(() => Store.createAccount(u, p, $('lMaster').value).then(() => true), 'Acesso criado!')) showApp();
+      } else if (await run(() => Store.login(u, p).then(() => true))) showApp();
     };
     $('lUser').focus();
   }

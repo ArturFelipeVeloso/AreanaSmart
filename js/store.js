@@ -7,6 +7,7 @@
   const CFG = window.ARENA_CONFIG || {};
   const DB_KEY = 'arena_db_v1';
   const SESSION_KEY = 'arena_session_v1';
+  const ACCOUNTS_KEY = 'arena_admins_v1';
 
   const uid = () => (crypto.randomUUID ? crypto.randomUUID() : 'id-' + Date.now().toString(36) + Math.random().toString(36).slice(2));
   const now = () => new Date().toISOString();
@@ -124,22 +125,51 @@
       this._write({ competitions: data.competitions, teams: data.teams || [], competitors: data.competitors || [], brackets: data.brackets || {} });
     },
 
-    /* autenticação local: usuário e hash da senha (PBKDF2) fixos em js/config.js.
-       Ninguém consegue criar outro acesso pelo site. */
-    async needsSetup() { return false; },
-    async setup() { throw new Error('Cadastro de admin desativado.'); },
-    async login(user, pass) {
-      const cfgHash = String(CFG.adminPassHash || '');
-      if (!CFG.adminUser || !cfgHash) throw new Error('Admin não configurado em js/config.js.');
-      if (norm(user) !== norm(CFG.adminUser) || !(await verifyPass(pass, cfgHash))) throw new Error('Usuário ou senha incorretos.');
-      sessionStorage.setItem(SESSION_KEY, '1');
+    /* autenticação local
+       - Contas de admin criadas pela tela "Criar acesso", que exige a SENHA MASTER.
+         A senha master só existe como hash PBKDF2 em js/config.js (masterPassHash).
+       - As contas ficam neste navegador, com a senha também em hash PBKDF2.
+       - O admin fixo do config.js (adminUser/adminPassHash), se definido, continua valendo. */
+    _accounts() { try { return JSON.parse(localStorage.getItem(ACCOUNTS_KEY) || '[]'); } catch (e) { return []; } },
+    canCreateAccount() { return !!CFG.masterPassHash; },
+    async createAccount(user, pass, master) {
+      const u = norm(user);
+      if (!u) throw new Error('Informe o usuário.');
+      if (!pass || pass.length < 6) throw new Error('A senha precisa ter pelo menos 6 caracteres.');
+      if (!CFG.masterPassHash || !(await verifyPass(master, CFG.masterPassHash))) throw new Error('Senha master incorreta.');
+      const list = this._accounts();
+      if (list.some((a) => a.user === u) || (CFG.adminUser && norm(CFG.adminUser) === u)) throw new Error('Esse usuário já existe.');
+      list.push({ user: u, hash: await hashPass(pass), created_at: now() });
+      localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
+      sessionStorage.setItem(SESSION_KEY, u);
     },
-    async isLoggedIn() { return sessionStorage.getItem(SESSION_KEY) === '1'; },
+    async needsSetup() { return false; },
+    async setup() { throw new Error('Use "Criar acesso".'); },
+    async login(user, pass) {
+      const u = norm(user);
+      const acc = this._accounts().find((a) => a.user === u);
+      let ok = false;
+      if (acc) ok = await verifyPass(pass, acc.hash);
+      else if (CFG.adminUser && CFG.adminPassHash && norm(CFG.adminUser) === u) ok = await verifyPass(pass, CFG.adminPassHash);
+      if (!ok) throw new Error('Usuário ou senha incorretos.');
+      sessionStorage.setItem(SESSION_KEY, u);
+    },
+    async isLoggedIn() { const v = sessionStorage.getItem(SESSION_KEY); return !!v; },
+    currentUser() { const v = sessionStorage.getItem(SESSION_KEY); return v && v !== '1' ? v : ''; },
     async logout() { sessionStorage.removeItem(SESSION_KEY); },
-    /* Gera o hash de uma nova senha para colar em js/config.js */
     async changePassword(oldPass, newPass) {
+      if (!newPass || newPass.length < 6) throw new Error('A nova senha precisa ter pelo menos 6 caracteres.');
+      const u = this.currentUser();
+      const list = this._accounts();
+      const acc = list.find((a) => a.user === u);
+      if (acc) {
+        if (!(await verifyPass(oldPass, acc.hash))) throw new Error('Senha atual incorreta.');
+        acc.hash = await hashPass(newPass);
+        localStorage.setItem(ACCOUNTS_KEY, JSON.stringify(list));
+        return true;
+      }
+      // admin fixo do config.js: gera a linha para substituir no arquivo
       if (!(await verifyPass(oldPass, String(CFG.adminPassHash || '')))) throw new Error('Senha atual incorreta.');
-      if (!newPass || newPass.length < 8) throw new Error('A nova senha precisa ter pelo menos 8 caracteres.');
       return { configLine: `adminPassHash: '${await hashPass(newPass)}',` };
     },
 
