@@ -9,7 +9,7 @@ Feito em HTML + CSS + JavaScript puro: não precisa de build, roda direto no **G
 | Página | Para quê |
 |---|---|
 | `index.html` | **Telão** (público). Botão *Tela cheia* ou tecla **F**. Atualiza sozinho. |
-| `admin.html` | **Painel admin** (login e senha). |
+| `admin/` | **Painel admin** (login e senha). Endereço: `.../admin/` |
 
 ## Como funciona
 
@@ -73,7 +73,7 @@ Banco PostgreSQL na nuvem: o admin pode lançar resultados do celular e o telão
 3. No repositório: **Settings → Pages → Build and deployment → Source: Deploy from a branch → Branch: `main` / `(root)` → Save**.
 4. Em 1–2 minutos o site estará em `https://SEU-USUARIO.github.io/arena-competicoes/`
    - Telão: `.../arena-competicoes/`
-   - Admin: `.../arena-competicoes/admin.html`
+   - Admin: `.../arena-competicoes/admin/`
 
 Para testar no computador antes de publicar: dê dois cliques em `index.html`, ou rode `python3 -m http.server` na pasta e abra `http://localhost:8000`.
 
@@ -81,7 +81,8 @@ Para testar no computador antes de publicar: dê dois cliques em `index.html`, o
 
 ```
 index.html            Telão público
-admin.html            Painel admin
+admin/index.html      Painel admin (endereço .../admin/)
+admin.html            Redireciona links antigos para admin/
 css/style.css         Visual
 js/config.js          Configuração (modo local ou Supabase)
 js/engine.js          Sorteio, árvore, pontuação e rankings

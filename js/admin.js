@@ -50,7 +50,7 @@
     $('compSelect').innerHTML = list.map((c) => `<option value="${c.id}"${c.id === compId ? ' selected' : ''}>${esc(c.name)}</option>`).join('');
     $('firstComp').hidden = !!compId;
     $('compArea').hidden = !compId;
-    $('openScreen').href = 'index.html' + (compId ? '?c=' + compId : '');
+    $('openScreen').href = '../' + (compId ? '?c=' + compId : '');
     if (!compId) { data = null; return; }
     data = await run(() => Store.loadCompetition(compId));
     if (data) renderAll();
