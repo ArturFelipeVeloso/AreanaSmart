@@ -326,3 +326,8 @@ input[type=color].input { padding: 4px; height: 44px; cursor: pointer; }
 
 /* botão de tema */
 .theme-btn { width: 44px; padding: 10px 0; font-size: 1.1rem; }
+
+/* edição inline do nome do competidor */
+.chip-name { cursor: text; border-radius: 6px; padding: 1px 3px; margin: -1px -3px; }
+.chip-name:hover { background: var(--hover); }
+.chip-input { font: inherit; color: var(--text); background: var(--input-bg); border: 1px solid var(--accent); border-radius: 6px; padding: 2px 6px; outline: none; box-shadow: 0 0 0 3px rgba(124, 92, 255, .25); }

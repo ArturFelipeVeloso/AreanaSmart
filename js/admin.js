@@ -178,7 +178,7 @@
     $('playerGroups').innerHTML = data.teams.length ? data.teams.map((t) => {
       const ps = data.competitors.filter((c) => c.team_id === t.id);
       return `<div class="team-group"><div class="team-group-h"><span class="t-dot" style="--tc:${esc(t.color)}"></span>${esc(t.name)} <span class="sub" style="color:var(--muted);font-weight:500">(${ps.length})</span></div>
-        <div class="chips">${ps.length ? ps.map((p) => `<span class="chip">${esc(p.name)}
+        <div class="chips">${ps.length ? ps.map((p) => `<span class="chip"><span class="chip-name" data-rename="${p.id}" title="Clique 2 vezes para editar o nome">${esc(p.name)}</span>
           <select data-move="${p.id}" title="Trocar de time">${teamOpts(t.id)}</select>
           <button data-rm="${p.id}" title="Remover">×</button></span>`).join('') : '<span class="sub" style="color:var(--muted)">Sem competidores</span>'}</div></div>`;
     }).join('') : '<p class="hint">Cadastre os times primeiro.</p>';
@@ -206,6 +206,38 @@
     await run(() => Store.saveCompetitor(Object.assign({}, p, { team_id: s.value })), 'Competidor movido de time.');
     reload();
   };
+  // Duplo clique no nome do competidor: edição inline (Enter salva, Esc cancela)
+  $('playerGroups').ondblclick = (e) => {
+    const span = e.target.closest('[data-rename]');
+    if (!span || span.querySelector('input')) return;
+    const p = data.competitors.find((c) => c.id === span.dataset.rename);
+    if (!p) return;
+    const input = document.createElement('input');
+    input.className = 'chip-input';
+    input.value = p.name;
+    input.size = Math.max(6, p.name.length + 2);
+    span.textContent = '';
+    span.appendChild(input);
+    input.focus();
+    input.select();
+    let done = false;
+    const finish = async (save) => {
+      if (done) return;
+      done = true;
+      const name = input.value.trim();
+      if (!save || !name || name === p.name) { span.textContent = p.name; return; }
+      const ok = await run(() => Store.saveCompetitor(Object.assign({}, p, { name })), 'Nome atualizado!');
+      if (!ok) span.textContent = p.name;
+      await reload();
+    };
+    input.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Enter') { ev.preventDefault(); finish(true); }
+      if (ev.key === 'Escape') { ev.preventDefault(); finish(false); }
+    });
+    input.addEventListener('input', () => { input.size = Math.max(6, input.value.length + 2); });
+    input.addEventListener('blur', () => finish(true));
+  };
+
   $('playerGroups').onclick = async (e) => {
     const b = e.target.closest('[data-rm]'); if (!b) return;
     const p = data.competitors.find((c) => c.id === b.dataset.rm);
